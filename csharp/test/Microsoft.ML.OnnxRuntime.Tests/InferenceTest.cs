@@ -140,6 +140,7 @@ namespace Microsoft.ML.OnnxRuntime.Tests
         public void CanCreateAndDisposeSessionWithModelPath()
         {
             string modelPath = Path.Combine(Directory.GetCurrentDirectory(), "squeezenet.onnx");
+            
             using (var session = new InferenceSession(modelPath))
             {
                 Assert.NotNull(session);

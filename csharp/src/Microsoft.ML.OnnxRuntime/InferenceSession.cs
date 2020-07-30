@@ -19,6 +19,7 @@ namespace Microsoft.ML.OnnxRuntime
     {
         protected IntPtr _nativeHandle;
         protected Dictionary<string, NodeMetadata> _inputMetadata, _outputMetadata, _overridableInitializerMetadata;
+        public Dictionary<string, ModelMetadata> _modelMetadata;
         private SessionOptions _builtInSessionOptions = null;
         private RunOptions _builtInRunOptions = null;
 
@@ -96,6 +97,17 @@ namespace Microsoft.ML.OnnxRuntime
             get
             {
                 return _overridableInitializerMetadata;
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public IReadOnlyDictionary<string, ModelMetadata> ModelMetadata
+        {
+            get
+            {
+                return _modelMetadata;
             }
         }
 
@@ -726,13 +738,13 @@ namespace Microsoft.ML.OnnxRuntime
         }
 
         //TODO: kept internal until implemented
-        internal ModelMetadata ModelMetadata
-        {
-            get
-            {
-                return new ModelMetadata(); //TODO: implement
-            }
-        }
+        //internal ModelMetadata ModelMetadata
+        //{
+        //    get
+        //    {
+        //        return new ModelMetadata(); //TODO: implement
+        //    }
+        //}
 
         #endregion
 
@@ -771,6 +783,8 @@ namespace Microsoft.ML.OnnxRuntime
                 // Initialize input/output metadata
                 _inputMetadata = new Dictionary<string, NodeMetadata>();
                 _outputMetadata = new Dictionary<string, NodeMetadata>();
+                // Initialize model metadata
+                _modelMetadata = new Dictionary<string, ModelMetadata>();
                 _overridableInitializerMetadata = new Dictionary<string, NodeMetadata>();
 
                 // get input count
@@ -793,10 +807,53 @@ namespace Microsoft.ML.OnnxRuntime
                     _outputMetadata[GetOutputName(i)] = GetOutputMetadata(i);
                 }
 
+                // get model metadta
+                IntPtr modelMetadata = IntPtr.Zero;
+                NativeApiStatus.VerifySuccess(NativeMethods.OrtSessionGetModelMetadata(_nativeHandle, out modelMetadata));
+
+                IntPtr customKeys = IntPtr.Zero;
+                UIntPtr numKeys = UIntPtr.Zero;
+                NativeApiStatus.VerifySuccess(NativeMethods.OrtModelMetadataGetCustomMetadataMapKeys(modelMetadata, NativeMemoryAllocator.DefaultInstance.Handle, out numKeys, out customKeys));
+
+                // TODO: Custom key-value pairs are not found
+
+                // NativeApiStatus.VerifySuccess(NativeMethods.OrtModelMetadataLookupCustomMetadataMap(modelMetadata,  NativeMemoryAllocator.DefaultInstance.Handle, keys, out value));
+
+                // get graph name
+                IntPtr graphNameHandle = IntPtr.Zero;
+                NativeApiStatus.VerifySuccess(NativeMethods.OrtModelMetadataGetGraphName(modelMetadata, NativeMemoryAllocator.DefaultInstance.Handle, out graphNameHandle));
+                string graphName = null;
+                graphName = Marshal.PtrToStringAnsi(graphNameHandle); //assumes charset = ANSI
+
+                // get graph domain
+                IntPtr modelDomainHandle = IntPtr.Zero;
+                NativeApiStatus.VerifySuccess(NativeMethods.OrtModelMetadataGetDomain(modelMetadata, NativeMemoryAllocator.DefaultInstance.Handle, out modelDomainHandle));
+                string domainName = null;
+                domainName = Marshal.PtrToStringAnsi(modelDomainHandle); //assumes charset = ANSI
+
+                // get model version
+                IntPtr modelVersionHandle = IntPtr.Zero;
+                NativeApiStatus.VerifySuccess(NativeMethods.OrtModelMetadataGetVersion(modelMetadata, out modelVersionHandle));
+                string modelVersion = null;
+                modelVersion = Marshal.PtrToStringAnsi(modelVersionHandle); //assumes charset = ANSI
+
+                // get model producer name
+                IntPtr modelProducerNameHandle = IntPtr.Zero;
+                NativeApiStatus.VerifySuccess(NativeMethods.OrtModelMetadataGetProducerName(modelMetadata, NativeMemoryAllocator.DefaultInstance.Handle, out modelProducerNameHandle));
+                string modelProducerName = null;
+                modelProducerName = Marshal.PtrToStringAnsi(modelProducerNameHandle); //assumes charset = ANSI
+
+                // get model description
+                IntPtr modelDescriptionHandle = IntPtr.Zero;
+                NativeApiStatus.VerifySuccess(NativeMethods.OrtModelMetadataGetDescription(modelMetadata, NativeMemoryAllocator.DefaultInstance.Handle, out modelDescriptionHandle));
+                string modelDescription = null;
+                modelDescription = Marshal.PtrToStringAnsi(modelDescriptionHandle); //assumes charset = ANSI
+
+
                 // get overridable initializer count
                 UIntPtr initilaizerCount = UIntPtr.Zero;
                 NativeApiStatus.VerifySuccess(NativeMethods.OrtSessionGetOverridableInitializerCount(_nativeHandle, out initilaizerCount));
-
+                
                 // get all the overridable initializer names and metadata
                 for (ulong i = 0; i < (ulong)initilaizerCount; i++)
                 {
@@ -1102,9 +1159,70 @@ namespace Microsoft.ML.OnnxRuntime
     }
 
 
-    internal class ModelMetadata
+    public class ModelMetadata
     {
-        //TODO: placeholder for Model metadata. Currently C-API does not expose this.
+        private string _modelGraphName;
+        private string _modelDomain;
+        private string _modelVersion;
+        private string _modelDescription;
+        private string _modelProducerName;
+        private string[] _customKeys;
+
+
+        internal ModelMetadata(string modelGraphName, string modelDomain, string modelVersion, string modelDescription, string modelProducerName, string[] customKeys)
+        {
+            _modelGraphName = modelGraphName;
+            _modelDomain = modelDomain;
+            _modelVersion = modelVersion;
+            _modelDescription = modelDescription;
+            _modelProducerName = modelProducerName;
+            _customKeys = customKeys;
+        }
+
+        public string GraphName
+        {
+            get
+            {
+                return _modelGraphName;
+            }
+        }
+
+        public string DomainName
+        {
+            get
+            {
+                return _modelDomain;
+            }
+        }
+        public string Description
+        {
+            get
+            {
+                return _modelDescription;
+            }
+        }
+        public string Version
+        {
+            get
+            {
+                return _modelVersion;
+            }
+        }
+        public string ProducerName
+        {
+            get
+            {
+                return _modelProducerName;
+            }
+        }
+        public string[] CustomKeys
+        {
+            get
+            {
+                return _customKeys;
+            }
+        }
+
     }
 
 

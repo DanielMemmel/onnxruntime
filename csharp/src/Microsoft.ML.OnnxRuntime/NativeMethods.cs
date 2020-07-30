@@ -53,6 +53,9 @@ namespace Microsoft.ML.OnnxRuntime
 
         public IntPtr SessionGetInputCount;
         public IntPtr SessionGetOutputCount;
+
+
+
         public IntPtr SessionGetOverridableInitializerCount;
         public IntPtr SessionGetInputTypeInfo;
         public IntPtr SessionGetOutputTypeInfo;
@@ -138,6 +141,18 @@ namespace Microsoft.ML.OnnxRuntime
         public IntPtr ReleaseMapTypeInfo;
         public IntPtr ReleaseSequenceTypeInfo;
         public IntPtr SessionEndProfiling;
+
+        // Metadata
+        public IntPtr SessionGetModelMetadata;
+        public IntPtr ModelMetadataGetProducerName;
+        public IntPtr ModelMetadataGetGraphName;
+        public IntPtr ModelMetadataGetDomain;
+        public IntPtr ModelMetadataGetDescription;
+        public IntPtr ModelMetadataGetVersion;
+
+        // Custom metadata
+        public IntPtr ModelMetadataGetCustomMetadataMapKeys;
+        public IntPtr ModelMetadataLookupCustomMetadataMap;
     }
 
     internal static class NativeMethods
@@ -237,6 +252,17 @@ namespace Microsoft.ML.OnnxRuntime
             OrtGetSymbolicDimensions = (DOrtGetSymbolicDimensions)Marshal.GetDelegateForFunctionPointer(api_.GetSymbolicDimensions, typeof(DOrtGetSymbolicDimensions));
             OrtGetTensorShapeElementCount = (DOrtGetTensorShapeElementCount)Marshal.GetDelegateForFunctionPointer(api_.GetTensorShapeElementCount, typeof(DOrtGetTensorShapeElementCount));
             OrtReleaseValue = (DOrtReleaseValue)Marshal.GetDelegateForFunctionPointer(api_.ReleaseValue, typeof(DOrtReleaseValue));
+
+            // Metadata
+            OrtSessionGetModelMetadata = (DOrtSessionGetModelMetadata)Marshal.GetDelegateForFunctionPointer(api_.SessionGetModelMetadata, typeof(DOrtSessionGetModelMetadata));
+            OrtModelMetadataGetGraphName = (DOrtModelMetadataGetGraphName)Marshal.GetDelegateForFunctionPointer(api_.ModelMetadataGetGraphName, typeof(DOrtModelMetadataGetGraphName));
+            OrtModelMetadataGetDomain = (DOrtModelMetadataGetDomain)Marshal.GetDelegateForFunctionPointer(api_.ModelMetadataGetDomain, typeof(DOrtModelMetadataGetDomain));
+            OrtModelMetadataGetVersion = (DOrtModelMetadataGetVersion)Marshal.GetDelegateForFunctionPointer(api_.ModelMetadataGetVersion, typeof(DOrtModelMetadataGetVersion));
+            OrtModelMetadataGetProducerName = (DOrtModelMetadataGetProducerName)Marshal.GetDelegateForFunctionPointer(api_.ModelMetadataGetProducerName, typeof(DOrtModelMetadataGetProducerName));
+            OrtModelMetadataGetDescription = (DOrtModelMetadataGetDescription)Marshal.GetDelegateForFunctionPointer(api_.ModelMetadataGetDescription, typeof(DOrtModelMetadataGetDescription));
+            // Custom Metadata
+            OrtModelMetadataGetCustomMetadataMapKeys = (DOrtModelMetadataGetCustomMetadataMapKeys)Marshal.GetDelegateForFunctionPointer(api_.ModelMetadataGetCustomMetadataMapKeys, typeof(DOrtModelMetadataGetCustomMetadataMapKeys));
+            OrtModelMetadataLookupCustomMetadataMap = (DOrtModelMetadataLookupCustomMetadataMap)Marshal.GetDelegateForFunctionPointer(api_.ModelMetadataLookupCustomMetadataMap, typeof(DOrtModelMetadataLookupCustomMetadataMap));
         }
 
         [DllImport(nativeLib, CharSet = charSet)]
@@ -330,7 +356,70 @@ namespace Microsoft.ML.OnnxRuntime
                                                 IntPtr /*(const OrtSession*)*/ session,
                                                 IntPtr /*(OrtAllocator*)*/ allocator,
                                                 out IntPtr /*(char**)*/profile_file);
+
         public static DOrtSessionEndProfiling OrtSessionEndProfiling;
+
+        #region ModelMetadata
+        /// <summary>
+        /// Create delegates to fetch metatdata
+        /// </summary>
+
+        public delegate IntPtr /*OrtStatus*/DOrtSessionGetModelMetadata(
+                                                IntPtr /*(OrtSession*)*/ session,
+                                                out IntPtr /*(ModelMetadata**)*/ model_metadata);
+        public static DOrtSessionGetModelMetadata OrtSessionGetModelMetadata;
+
+
+        public delegate IntPtr /*OrtStatus*/DOrtModelMetadataGetProducerName(
+                                                IntPtr /*(ModelMetadata**)*/ model_metadata,
+                                                IntPtr /*(OrtAllocator*)*/ allocator,
+                                                out IntPtr /*(char**)*/ producer_name);
+        public static DOrtModelMetadataGetProducerName OrtModelMetadataGetProducerName;
+
+
+        public delegate IntPtr /*OrtStatus*/DOrtModelMetadataGetGraphName(
+                                                IntPtr /*(ModelMetadata**)*/ model_metadata,
+                                                IntPtr /*(OrtAllocator*)*/ allocator,
+                                                out IntPtr /*(char**)*/graph_name);
+        public static DOrtModelMetadataGetGraphName OrtModelMetadataGetGraphName;
+
+
+        public delegate IntPtr /*OrtStatus*/DOrtModelMetadataGetDomain(
+                                                IntPtr /*(ModelMetadata**)*/ model_metadata,
+                                                IntPtr /*(OrtAllocator*)*/ allocator,
+                                                out IntPtr /*(char**)*/domain);
+        public static DOrtModelMetadataGetDomain OrtModelMetadataGetDomain;
+
+
+        public delegate IntPtr /*OrtStatus*/DOrtModelMetadataGetDescription(
+                                                IntPtr /*(ModelMetadata**)*/ model_metadata,
+                                                IntPtr /*(OrtAllocator*)*/ allocator,
+                                                out IntPtr /*(char**)*/description);
+        public static DOrtModelMetadataGetDescription OrtModelMetadataGetDescription;
+
+
+        public delegate IntPtr /*OrtStatus*/DOrtModelMetadataGetVersion(
+                                                IntPtr /*(ModelMetadata**)*/ model_metadata,
+                                                out IntPtr /*(value)*/value);
+        public static DOrtModelMetadataGetVersion OrtModelMetadataGetVersion;
+
+
+        public delegate IntPtr /*OrtStatus*/DOrtModelMetadataGetCustomMetadataMapKeys(
+                                                IntPtr /*(ModelMetadata**)*/ model_metadata,
+                                                IntPtr /*(OrtAllocator*)*/ allocator,
+                                                out UIntPtr /*(int**)*/ num_keys,
+                                                out IntPtr /*(array**)*/keys);
+        public static DOrtModelMetadataGetCustomMetadataMapKeys OrtModelMetadataGetCustomMetadataMapKeys;
+
+
+        public delegate IntPtr /*OrtStatus*/DOrtModelMetadataLookupCustomMetadataMap(
+                                                IntPtr /*(ModelMetadata**)*/ model_metadata,
+                                                IntPtr /*(OrtAllocator*)*/ allocator,
+                                                IntPtr /*(char)*/ key,
+                                                out IntPtr /*(char)*/value);
+        public static DOrtModelMetadataLookupCustomMetadataMap OrtModelMetadataLookupCustomMetadataMap;
+
+        #endregion
 
         public delegate IntPtr /*(OrtStatus*)*/DOrtSessionGetOverridableInitializerName(
                                                 IntPtr /*(OrtSession*)*/ session,
